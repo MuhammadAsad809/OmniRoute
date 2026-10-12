@@ -95,8 +95,8 @@ class MainActivity : Activity() {
         content.addView(space(18))
         card {
             addView(label("RUNTIME STATUS", 11f, muted, true))
-            addView(label("UI preview mode", 21f, mainText, true))
-            addView(label("The Android shell is being built first. The real Node.js gateway is not connected yet.", 13f, muted))
+            addView(label("Local API bridge", 21f, mainText, true))
+            addView(label("The native local API bridge supports authenticated model listing and non-streaming chat requests for configured OpenAI-compatible providers. Full OmniRoute Node.js runtime remains a separate milestone.", 13f, muted))
             addView(space(10))
             addView(actionButton("Start lifecycle test service") {
                 val intent = Intent(this@MainActivity, OmniRouteService::class.java)
@@ -112,14 +112,14 @@ class MainActivity : Activity() {
         card {
             addView(label("QUICK OVERVIEW", 11f, muted, true))
             addView(label("${vault.names().count { !it.startsWith("__") }} provider credential(s) saved", 18f, mainText, true))
-            addView(label("Credentials are encrypted with Android Keystore. Provider requests are not active until the gateway runtime is integrated.", 13f, muted))
+            addView(label("Provider credentials are encrypted with Android Keystore and used by the local OpenAI-compatible bridge.", 13f, muted))
             addView(actionButton("Manage providers") { showPage("Providers") })
         }
         content.addView(space(14))
         card {
             addView(label("LOCAL API", 11f, muted, true))
             addView(label("http://127.0.0.1:20128/v1", 16f, mainText, true))
-            addView(label("Planned gateway address. It is not served by this UI scaffold yet.", 13f, muted))
+            addView(label("Local API bridge address. Start the service and use your local Bearer token.", 13f, muted))
             addView(actionButton("API settings") { showPage("API") })
         }
     }
@@ -230,7 +230,7 @@ class MainActivity : Activity() {
             addView(label("LOCAL API TOKEN", 11f, muted, true))
             val hasToken = vault.get(GATEWAY_TOKEN_KEY) != null
             addView(label(if (hasToken) "Token configured · hidden" else "No token generated", 16f, mainText, true))
-            addView(label("This token is stored encrypted on-device. It is not active until the real gateway is connected.", 13f, muted))
+            addView(label("This token authenticates requests to the local API bridge and is stored encrypted on-device.", 13f, muted))
             addView(actionButton(if (hasToken) "Regenerate local token" else "Generate local token") {
                 val bytes = ByteArray(32)
                 SecureRandom().nextBytes(bytes)
@@ -259,10 +259,10 @@ class MainActivity : Activity() {
         content.addView(space(12))
         card {
             addView(label("DIAGNOSTICS", 11f, muted, true))
-            addView(label("Gateway: not integrated", 16f, mainText, true))
-            addView(label("Node.js runtime: pending Android-compatible build", 13f, muted))
+            addView(label("Native API bridge: implemented", 16f, mainText, true))
+            addView(label("Full OmniRoute Node.js runtime: pending Android-compatible build", 13f, muted))
             addView(label("Database: pending SQLite compatibility test", 13f, muted))
-            addView(label("Streaming: not tested", 13f, muted))
+            addView(label("Streaming: not implemented in native bridge", 13f, muted))
         }
     }
 
@@ -289,8 +289,8 @@ class MainActivity : Activity() {
         content.addView(space(12))
         card {
             addView(label("ABOUT THIS BUILD", 11f, muted, true))
-            addView(label("OmniRoute Android · UI foundation", 17f, mainText, true))
-            addView(label("This is not yet a working AI gateway. Provider routing, model discovery, chat, streaming, usage analytics, and database sync will be connected after the compatible Node.js runtime is proven.", 13f, muted))
+            addView(label("OmniRoute Android · local API bridge preview", 17f, mainText, true))
+            addView(label("The native bridge supports OpenAI-compatible /v1/models and non-streaming /v1/chat/completions for configured providers. Full OmniRoute routing, streaming, fallback, usage analytics, and SQLite remain pending the compatible Node.js runtime.", 13f, muted))
         }
     }
 
