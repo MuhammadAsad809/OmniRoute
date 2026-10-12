@@ -7,7 +7,8 @@ This is an early lifecycle proof-of-concept, not the complete OmniRoute gateway.
 - Native Android app shell with Start/Stop controls.
 - Foreground service with a persistent notification.
 - Loopback-only HTTP health endpoint at `127.0.0.1:18765/health`.
-- GitHub Actions workflow to assemble a debug APK and upload it as an artifact.
+- GitHub Actions workflow to assemble a debug APK, run an Android API 35 emulator smoke test, and upload the APK artifact only if the job succeeds.
+- Instrumentation smoke test that launches the app, starts the foreground service, requests the loopback health endpoint, and checks that the scaffold does not claim gateway integration.
 
 The health response deliberately includes `"gatewayIntegrated":false`. This scaffold does not yet bundle or launch Node.js, Next.js, SQLite, provider adapters, or the actual OmniRoute `/v1` routes.
 
