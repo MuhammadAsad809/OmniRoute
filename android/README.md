@@ -1,6 +1,6 @@
-# OmniRoute Android scaffold
+# OmniRoute Android — local API bridge preview
 
-This is an early lifecycle proof-of-concept, not the complete OmniRoute gateway.
+This APK now includes a native, loopback-only OpenAI-compatible API bridge. It is a useful first local gateway slice, but it is not the full Node.js/Next.js OmniRoute runtime.
 
 ## What exists now
 
@@ -10,11 +10,14 @@ This is an early lifecycle proof-of-concept, not the complete OmniRoute gateway.
 - Delete-all-local-credentials control.
 - Start/Stop controls for the temporary lifecycle test service.
 - Foreground service with a persistent notification.
-- Loopback-only HTTP health endpoint at `127.0.0.1:18765/health`.
+- Loopback-only HTTP API at `127.0.0.1:20128` with `/health`, authenticated `GET /v1/models`, and authenticated `POST /v1/chat/completions` routes.
+- OpenAI-compatible provider configuration: provider name, HTTPS base URL, exact upstream model ID, and encrypted API key.
+- Provider requests are forwarded directly to the configured OpenAI-compatible endpoint; provider API keys are never sent back to API clients.
+- Local API Bearer token is shown once at generation time and can be copied to the clipboard.
 - GitHub Actions workflow to assemble a debug APK, run an Android API 35 emulator smoke test, and upload the APK artifact only if the job succeeds.
 - Instrumentation smoke test that launches the app, starts the foreground service, requests the loopback health endpoint, and checks that the scaffold does not claim gateway integration.
 
-The health response deliberately includes `"gatewayIntegrated":false`. This scaffold does not yet bundle or launch Node.js, Next.js, SQLite, provider adapters, or the actual OmniRoute `/v1` routes.
+The health response deliberately includes `"gatewayIntegrated":false` and `"openAiCompatibleBridge":true`. The native bridge supports only `/v1/models` and non-streaming `/v1/chat/completions` for configured OpenAI-compatible providers. It does not bundle or launch Node.js, Next.js, SQLite, or OmniRoute's full adapter/routing engine. Streaming, OAuth, fallback, usage analytics, and the broader OmniRoute API are not implemented in this bridge.
 
 ## Build
 
@@ -33,11 +36,13 @@ Or run the **Android APK scaffold** workflow from GitHub Actions and download it
 ## Smoke test on a device
 
 1. Install the debug APK on an Android device.
-2. Open OmniRoute and tap **Start local service**.
-3. From a local terminal/ADB shell, request `http://127.0.0.1:18765/health`.
-4. Confirm the response reports `runtime=android-scaffold` and `gatewayIntegrated=false`.
-5. Minimize the app and repeat the request; record device model, Android version, and result.
-6. Tap **Stop local service** and confirm the endpoint no longer responds.
+2. Open OmniRoute, generate a local API token on the API screen, and copy it.
+3. Add a provider with an HTTPS OpenAI-compatible base URL, exact model ID, and API key.
+4. Start the local service.
+5. Request `http://127.0.0.1:20128/health`, then use `GET /v1/models` with `Authorization: Bearer YOUR_LOCAL_TOKEN`.
+6. Send a non-streaming OpenAI-compatible `POST /v1/chat/completions` request using the returned model ID.
+7. Minimize the app and retest; record device model, Android version, and result.
+8. Tap **Stop service** and confirm the endpoint no longer responds.
 
 ## Runtime compatibility investigation
 
@@ -45,4 +50,4 @@ See [Node.js Runtime Spike](../docs/android/NODE_RUNTIME_SPIKE.md). The reviewed
 
 ## Next step
 
-Find or build a reproducible Android ARM64 Node.js 24 runtime, validate outbound HTTPS and streaming, and prove a compatible persistent SQLite strategy. Only then replace the temporary Kotlin health server with a real Node runtime adapter. Do not treat this scaffold as a functional AI gateway.
+Build and test this bridge on a physical ARM64 device, then prove a reproducible Android ARM64 Node.js 24 runtime and a compatible persistent SQLite strategy. The goal remains to embed the existing OmniRoute Node.js/Next.js server rather than treating the bridge as a replacement for it.
