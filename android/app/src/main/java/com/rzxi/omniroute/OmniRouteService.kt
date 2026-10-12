@@ -159,6 +159,9 @@ class OmniRouteService : Service() {
         val input = try { JSONObject(body) } catch (_: Exception) {
             return 400 to error("invalid_json", "Request body must be valid JSON")
         }
+        if (input.optBoolean("stream", false)) {
+            return 400 to error("streaming_not_supported", "This Android bridge currently supports non-streaming chat completions only")
+        }
         val requestedModel = input.optString("model", "")
         if (requestedModel.isBlank()) return 400 to error("invalid_request", "model is required")
         val provider = requestedModel.substringBefore("/")
