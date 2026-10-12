@@ -4,7 +4,11 @@ This is an early lifecycle proof-of-concept, not the complete OmniRoute gateway.
 
 ## What exists now
 
-- Native Android app shell with Start/Stop controls.
+- Native Android app shell with Home, Providers, API, and Settings screens.
+- Provider credential add/remove UI with AES-GCM encryption backed by Android Keystore.
+- Local API settings screen with encrypted token generation and explicit gateway readiness diagnostics.
+- Delete-all-local-credentials control.
+- Start/Stop controls for the temporary lifecycle test service.
 - Foreground service with a persistent notification.
 - Loopback-only HTTP health endpoint at `127.0.0.1:18765/health`.
 - GitHub Actions workflow to assemble a debug APK, run an Android API 35 emulator smoke test, and upload the APK artifact only if the job succeeds.
