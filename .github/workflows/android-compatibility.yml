@@ -1,0 +1,46 @@
+name: Android compatibility audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - android/full-apk-experiment
+    paths:
+      - 'package.json'
+      - 'electron/package.json'
+      - 'docs/android/**'
+      - '.github/workflows/android-compatibility.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Audit declared runtime and native dependencies
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const e = JSON.parse(fs.readFileSync('electron/package.json', 'utf8'));
+          console.log('OmniRoute version:', p.version);
+          console.log('Required Node.js:', p.engines?.node ?? 'not declared');
+          console.log('Electron version:', e.devDependencies?.electron ?? 'not declared');
+          const deps = { ...p.dependencies, ...p.optionalDependencies, ...p.devDependencies };
+          const patterns = /(sqlite|better-sqlite|playwright|electron|node-gyp|tproxy|native|sharp|pty|keytar)/i;
+          const found = Object.keys(deps).filter(name => patterns.test(name)).sort();
+          console.log('Potentially platform-sensitive packages:');
+          for (const name of found) console.log('-', name, deps[name]);
+          console.log('Static audit complete. This does not prove Android runtime compatibility.');
+          NODE
+      - name: Confirm Android project status
+        run: |
+          if [ -d android ]; then echo "An android/ directory exists; inspect its build configuration."; else echo "No android/ directory exists yet."; fi
+          if grep -q '"android"' package.json; then echo "Android-related package entry found."; else echo "No Android build script is declared in the root package.json."; fi
