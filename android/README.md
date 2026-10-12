@@ -34,6 +34,10 @@ Or run the **Android APK scaffold** workflow from GitHub Actions and download it
 5. Minimize the app and repeat the request; record device model, Android version, and result.
 6. Tap **Stop local service** and confirm the endpoint no longer responds.
 
+## Runtime compatibility investigation
+
+See [Node.js Runtime Spike](../docs/android/NODE_RUNTIME_SPIKE.md). The reviewed official nodejs-mobile release is Node 18, while OmniRoute requires Node.js 22.22.2 or 24–26. It must not be integrated as if it were compatible.
+
 ## Next step
 
-Replace the temporary Kotlin health server with a validated Android-compatible Node runtime, then integrate OmniRoute's real server and SQLite strategy. Do not treat this scaffold as a functional AI gateway.
+Find or build a reproducible Android ARM64 Node.js 24 runtime, validate outbound HTTPS and streaming, and prove a compatible persistent SQLite strategy. Only then replace the temporary Kotlin health server with a real Node runtime adapter. Do not treat this scaffold as a functional AI gateway.
