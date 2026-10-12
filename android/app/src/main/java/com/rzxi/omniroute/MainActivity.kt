@@ -29,6 +29,7 @@ class MainActivity : Activity() {
     private val accent = Color.rgb(116, 132, 255)
     private val muted = Color.rgb(165, 176, 198)
     private val mainText = Color.rgb(244, 247, 255)
+    private val providerBasePrefix = "__provider_base__"
     private var selectedPage = "Home"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,7 +110,7 @@ class MainActivity : Activity() {
         content.addView(space(14))
         card {
             addView(label("QUICK OVERVIEW", 11f, muted, true))
-            addView(label("${vault.names().count { it != GATEWAY_TOKEN_KEY }} provider credential(s) saved", 18f, mainText, true))
+            addView(label("${vault.names().count { !it.startsWith("__") }} provider credential(s) saved", 18f, mainText, true))
             addView(label("Credentials are encrypted with Android Keystore. Provider requests are not active until the gateway runtime is integrated.", 13f, muted))
             addView(actionButton("Manage providers") { showPage("Providers") })
         }
@@ -128,7 +129,7 @@ class MainActivity : Activity() {
         content.addView(space(12))
         content.addView(actionButton("＋ Add provider API key") { addProviderDialog() })
         content.addView(space(12))
-        val names = vault.names().filter { it != GATEWAY_TOKEN_KEY }.sorted()
+        val names = vault.names().filter { !it.startsWith("__") }.sorted()
         if (names.isEmpty()) {
             card {
                 addView(label("No providers configured", 17f, mainText, true))
@@ -146,6 +147,7 @@ class MainActivity : Activity() {
                             .setNegativeButton("Cancel", null)
                             .setPositiveButton("Remove") { _, _ ->
                                 vault.remove(name)
+                                vault.remove(providerBasePrefix + name)
                                 showPage("Providers")
                             }.show()
                     })
@@ -166,11 +168,17 @@ class MainActivity : Activity() {
             hint = "Provider name (e.g. OpenAI, Gemini, OpenRouter)"
             setSingleLine(true)
         }
+        val baseUrl = EditText(this).apply {
+            hint = "OpenAI-compatible base URL (e.g. https://api.openai.com)"
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+        }
         val key = EditText(this).apply {
             hint = "Provider API key"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
         box.addView(provider)
+        box.addView(baseUrl)
         box.addView(key)
         AlertDialog.Builder(this)
             .setTitle("Add provider")
@@ -179,15 +187,19 @@ class MainActivity : Activity() {
             .setPositiveButton("Save") { _, _ ->
                 val name = provider.text.toString().trim()
                 val secret = key.text.toString().trim()
-                if (name.isBlank() || secret.isBlank()) {
-                    Toast.makeText(this, "Enter both provider name and API key", Toast.LENGTH_LONG).show()
-                } else if (name == GATEWAY_TOKEN_KEY) {
-                    Toast.makeText(this, "Choose a different provider name", Toast.LENGTH_LONG).show()
+                val endpoint = baseUrl.text.toString().trim().trimEnd('/')
+                if (name.isBlank() || secret.isBlank() || endpoint.isBlank()) {
+                    Toast.makeText(this, "Enter provider name, base URL, and API key", Toast.LENGTH_LONG).show()
+                } else if (name.startsWith("__") || name.contains("/")) {
+                    Toast.makeText(this, "Use a simple provider name without / or reserved __ prefix", Toast.LENGTH_LONG).show()
+                } else if (!endpoint.startsWith("https://") && !endpoint.startsWith("http://127.0.0.1") && !endpoint.startsWith("http://localhost")) {
+                    Toast.makeText(this, "Provider URL must use HTTPS", Toast.LENGTH_LONG).show()
                 } else {
                     try {
                         vault.put(name, secret)
+                        vault.put(providerBasePrefix + name, endpoint)
                         showPage("Providers")
-                        Toast.makeText(this, "Credential encrypted and saved", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Provider URL and credential encrypted and saved", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         Toast.makeText(this, "Could not encrypt/save credential", Toast.LENGTH_LONG).show()
                     }
@@ -217,9 +229,14 @@ class MainActivity : Activity() {
                 try {
                     vault.put(GATEWAY_TOKEN_KEY, token)
                     AlertDialog.Builder(this@MainActivity)
-                        .setTitle("Local token generated")
-                        .setMessage("The token is saved encrypted. For security, this screen will not reveal it again. Regenerate it if you need a replacement after gateway integration.")
-                        .setPositiveButton("OK", null).show()
+                        .setTitle("Local API token — copy it now")
+                        .setMessage(token)
+                        .setPositiveButton("Copy") { _, _ ->
+                            val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("OmniRoute API token", token))
+                            Toast.makeText(this@MainActivity, "Token copied", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Close", null).show()
                     showPage("API")
                 } catch (_: Exception) {
                     Toast.makeText(this@MainActivity, "Could not save token", Toast.LENGTH_LONG).show()
