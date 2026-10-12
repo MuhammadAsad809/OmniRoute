@@ -30,6 +30,7 @@ class MainActivity : Activity() {
     private val muted = Color.rgb(165, 176, 198)
     private val mainText = Color.rgb(244, 247, 255)
     private val providerBasePrefix = "__provider_base__"
+    private val providerModelPrefix = "__provider_model__"
     private var selectedPage = "Home"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -148,6 +149,7 @@ class MainActivity : Activity() {
                             .setPositiveButton("Remove") { _, _ ->
                                 vault.remove(name)
                                 vault.remove(providerBasePrefix + name)
+                                vault.remove(providerModelPrefix + name)
                                 showPage("Providers")
                             }.show()
                     })
@@ -173,12 +175,17 @@ class MainActivity : Activity() {
             setSingleLine(true)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
         }
+        val modelName = EditText(this).apply {
+            hint = "Model ID (e.g. gpt-4o-mini)"
+            setSingleLine(true)
+        }
         val key = EditText(this).apply {
             hint = "Provider API key"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
         box.addView(provider)
         box.addView(baseUrl)
+        box.addView(modelName)
         box.addView(key)
         AlertDialog.Builder(this)
             .setTitle("Add provider")
@@ -188,8 +195,9 @@ class MainActivity : Activity() {
                 val name = provider.text.toString().trim()
                 val secret = key.text.toString().trim()
                 val endpoint = baseUrl.text.toString().trim().trimEnd('/')
-                if (name.isBlank() || secret.isBlank() || endpoint.isBlank()) {
-                    Toast.makeText(this, "Enter provider name, base URL, and API key", Toast.LENGTH_LONG).show()
+                val model = modelName.text.toString().trim()
+                if (name.isBlank() || secret.isBlank() || endpoint.isBlank() || model.isBlank()) {
+                    Toast.makeText(this, "Enter provider name, base URL, model ID, and API key", Toast.LENGTH_LONG).show()
                 } else if (name.startsWith("__") || name.contains("/")) {
                     Toast.makeText(this, "Use a simple provider name without / or reserved __ prefix", Toast.LENGTH_LONG).show()
                 } else if (!endpoint.startsWith("https://") && !endpoint.startsWith("http://127.0.0.1") && !endpoint.startsWith("http://localhost")) {
@@ -198,6 +206,7 @@ class MainActivity : Activity() {
                     try {
                         vault.put(name, secret)
                         vault.put(providerBasePrefix + name, endpoint)
+                        vault.put(providerModelPrefix + name, model)
                         showPage("Providers")
                         Toast.makeText(this, "Provider URL and credential encrypted and saved", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
