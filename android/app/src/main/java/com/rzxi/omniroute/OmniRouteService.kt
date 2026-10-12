@@ -31,6 +31,7 @@ class OmniRouteService : Service() {
         private const val NOTIFICATION_ID = 8301
         private const val TOKEN_KEY = "__local_gateway_token__"
         private const val BASE_PREFIX = "__provider_base__"
+        private const val MODEL_PREFIX = "__provider_model__"
         @Volatile var isRunning: Boolean = false
             private set
     }
@@ -145,8 +146,9 @@ class OmniRouteService : Service() {
     private fun models(): Pair<Int, String> {
         val data = JSONArray()
         vault.names().filter { !it.startsWith("__") }.sorted().forEach { provider ->
-            if (!vault.get(provider).isNullOrBlank() && !vault.get(BASE_PREFIX + provider).isNullOrBlank()) {
-                data.put(JSONObject().put("id", "$provider/default").put("object", "model").put("owned_by", provider))
+            val modelName = vault.get(MODEL_PREFIX + provider)
+            if (!vault.get(provider).isNullOrBlank() && !vault.get(BASE_PREFIX + provider).isNullOrBlank() && !modelName.isNullOrBlank()) {
+                data.put(JSONObject().put("id", "$provider/$modelName").put("object", "model").put("owned_by", provider))
             }
         }
         return 200 to JSONObject().put("object", "list").put("data", data).toString()
@@ -160,8 +162,8 @@ class OmniRouteService : Service() {
         val requestedModel = input.optString("model", "")
         if (requestedModel.isBlank()) return 400 to error("invalid_request", "model is required")
         val provider = requestedModel.substringBefore("/")
-        val model = requestedModel.substringAfter("/", "default")
-        if (provider.isBlank() || provider.startsWith("__")) return 400 to error("invalid_request", "Use a model ID returned by /v1/models")
+        val model = requestedModel.substringAfter("/", "")
+        if (provider.isBlank() || provider.startsWith("__") || model.isBlank()) return 400 to error("invalid_request", "Use a model ID returned by /v1/models")
         val apiKey = vault.get(provider) ?: return 400 to error("unknown_provider", "No saved credentials for the requested provider")
         val base = vault.get(BASE_PREFIX + provider)?.trimEnd('/') ?: return 400 to error("provider_not_configured", "Set this provider's OpenAI-compatible base URL")
         if (!base.startsWith("https://") && !base.startsWith("http://127.0.0.1") && !base.startsWith("http://localhost")) {
