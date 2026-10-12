@@ -1,6 +1,7 @@
 package com.rzxi.omniroute
 
 import android.content.Intent
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertTrue
@@ -15,7 +16,10 @@ class LocalServiceSmokeTest {
     fun foregroundServiceServesLoopbackHealthEndpoint() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
-        context.startForegroundService(Intent(context, OmniRouteService::class.java))
+        val activity = ActivityScenario.launch(MainActivity::class.java)
+        activity.onActivity {
+            context.startForegroundService(Intent(context, OmniRouteService::class.java))
+        }
 
         var lastError: Exception? = null
         var body: String? = null
@@ -50,6 +54,7 @@ class LocalServiceSmokeTest {
             assertTrue("Scaffold must not claim gateway integration: $body", body!!.contains("\"gatewayIntegrated\":false"))
         } finally {
             context.stopService(Intent(context, OmniRouteService::class.java))
+            activity.close()
         }
     }
 }
