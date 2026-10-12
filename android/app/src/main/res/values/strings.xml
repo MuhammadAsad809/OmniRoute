@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">OmniRoute</string>
+    <string name="service_description">Runs the user-started local OmniRoute API gateway.</string>
+</resources>
