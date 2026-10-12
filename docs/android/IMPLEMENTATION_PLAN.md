@@ -123,4 +123,4 @@ Every feature must be individually tested. Browser automation, system certificat
 
 ## Immediate next task
 
-Complete the compatibility inventory and implement Phase 1 only: a small Android APK that bundles a validated Node runtime, starts a loopback health endpoint, and proves SQLite persistence on a physical Android ARM64 device. Integrate the full OmniRoute server only after this test passes.
+The first runtime candidate review is recorded in [NODE_RUNTIME_SPIKE.md](./NODE_RUNTIME_SPIKE.md). The reviewed official nodejs-mobile release is Node 18, but OmniRoute requires Node.js 22.22.2 or 24–26, so it is not compatible and must not be integrated as-is. Next, identify or build a reproducible Android ARM64 Node.js 24 runtime and validate HTTPS, streaming, and persistent SQLite before replacing the Kotlin-only health endpoint. Full OmniRoute integration remains blocked until Phase 1 passes on a physical device.
