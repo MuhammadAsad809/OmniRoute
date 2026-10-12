@@ -46,3 +46,30 @@ Do not claim a working OmniRoute APK until a debug APK has been installed on a p
 - runtime stops and restarts without creating duplicate listeners.
 
 This document records an engineering blocker, not a completed runtime integration.
+## Termux is a useful Android validation path
+
+A current Node.js package running in Termux proves that Android can run a compatible Node CLI environment on the user's device. It is worth testing before attempting to bundle Node into the APK, but it is **not** the same as an embedded APK runtime.
+
+### Stage A — validate OmniRoute in Termux first
+
+On the target phone, check the actual installed runtime rather than assuming the Termux package version:
+
+```sh
+node --version
+npm --version
+node -p "process.arch + ' / ' + process.platform"
+```
+
+The required Node version must satisfy OmniRoute's declared engine range (`>=22.22.2 <23 || >=24.0.0 <27`). Then clone the Android experiment branch, install dependencies, and run the project's supported setup/build steps from the repository instructions. Do this as a separate experiment; do not use Termux success as evidence that the current APK scaffold embeds Node.
+
+Record any failures from package installation, `better-sqlite3` native compilation/loading, Next.js build/start, local API health, and streaming. A working `node --version` alone is not enough.
+
+### Stage B — choose the APK packaging path
+
+- **Termux companion app:** the quickest proof of concept. OmniRoute runs in Termux, while a native UI may connect to its loopback endpoint. This requires Termux and a separate setup step, so it does not meet the fully standalone APK goal.
+- **Bundled Node runtime:** the target standalone design. Node must be compiled or packaged for Android ARM64 at a supported version, launched and supervised by the app, and tested with OmniRoute's exact dependencies.
+- **Do not assume copying Termux's Node binary into an APK will work.** Termux binaries depend on its runtime environment and filesystem/linker conventions; the APK needs a deliberate packaging strategy and device testing.
+
+### Immediate experiment
+
+The next useful test is to run OmniRoute's actual install/build/start path under Termux on the target ARM64 phone and record the exact Node version plus the first failing dependency. If the application fails on `better-sqlite3`, that is a separate blocker to solve; changing Node versions alone will not resolve it.
