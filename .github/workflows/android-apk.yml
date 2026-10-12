@@ -26,6 +26,14 @@ jobs:
           gradle-version: "8.9"
       - name: Build debug APK
         run: gradle --no-daemon -p android assembleDebug
+      - name: Run Android emulator smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          script: gradle --no-daemon -p android connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
         with:
           name: omniroute-android-debug
