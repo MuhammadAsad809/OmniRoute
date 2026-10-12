@@ -50,8 +50,18 @@ class LocalServiceSmokeTest {
                 "Health endpoint did not respond. Last error: ${lastError?.message}",
                 body != null
             )
-            assertTrue("Unexpected runtime marker: $body", body!!.contains("\"runtime\":\"android-scaffold\""))
-            assertTrue("Scaffold must not claim gateway integration: $body", body!!.contains("\"gatewayIntegrated\":false"))
+            assertTrue(
+                "Unexpected runtime marker: $body",
+                body!!.contains("\\"runtime\\":\\"android-native-bridge\\"")
+            )
+            assertTrue(
+                "Native bridge must not claim full gateway integration: $body",
+                body!!.contains("\\"gatewayIntegrated\\":false")
+            )
+            assertTrue(
+                "Health response should identify the OpenAI-compatible bridge: $body",
+                body!!.contains("\\"openAiCompatibleBridge\\":true")
+            )
         } finally {
             context.stopService(Intent(context, OmniRouteService::class.java))
             activity.close()
